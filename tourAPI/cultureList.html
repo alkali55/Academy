@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>문화시설 관광 정보</title>
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="css/styles2.css" rel="stylesheet" />
+        <!-- jquery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script>
+            const MY_KEY = "bodgvmkG3ToKBU%2F0FLZyS%2BqJqDmGqVwnPAUXUra4%2BDyM9KVDC8m2a2D37GdWyytohVNW92pmylfOVX4UamgU4w%3D%3D";
+            let baseUrl = `http://apis.data.go.kr/B551011/KorService1/areaBasedList1`;
+            // let baseUrl = `http://apis.data.go.kr/B551011/KorService1/searchKeyword1`; // 검색버튼을 누르면 url 바꾸기
+            
+            let keyword = ""; // $keyword=유저검색어
+            let tenPaging = 0; // 페이지의 범위(ex. 1~10, 11~20)를 결정하는 변수
+            let pageNum = 1; // 현재 페이지의 숫자
+            let numOfRows = 9; // 9개씩 불러오기
+            let totalCnt = 0; // 불러온 데이터의 총 숫자
+            let totalPage = 0; // 총 페이지
+            
+            // 추가 해야 할 것
+            // 스피너
+            // 찜 기능
+            // 지역별 분류 (부트스트랩 드롭다운)
+            
+            $(function(){
+
+                // ajax 호출
+                callAjax();
+                // 페이지 버튼 만들기
+                addPageList();
+                
+                // 검색버튼에 이벤트 걸기
+                $("#search").click(function(){
+                    if ($("#searchWord").val().trim() !== ""){
+                        // console.log($("#searchWord").val());
+                        baseUrl = `http://apis.data.go.kr/B551011/KorService1/searchKeyword1`;
+                        keyword = `&keyword=${encodeURIComponent($("#searchWord").val())}`;
+                        console.log(keyword);
+                        callAjax();
+                        addPageList();
+                    } else {
+                        $("#myModal").modal("show");
+                    }
+                })
+
+                // 엔터버튼으로 검색하기
+                $("#searchWord").on("keydown", function(event){
+                    if(event.keyCode == 13 && $("#searchWord").val().trim() !== ""){
+                        baseUrl = `http://apis.data.go.kr/B551011/KorService1/searchKeyword1`;
+                        keyword = `&keyword=${encodeURIComponent($("#searchWord").val())}`;
+                        console.log(keyword);
+                        callAjax();
+                        addPageList();
+                    } else if (event.keyCode == 13){
+                        $("#myModal").modal("show");
+                    }
+                })
+
+                // 취소버튼으로 검색창 비우기
+                $("#cancel").click(function(){
+                    $("#searchWord").val("");
+                })
+
+                // 페이지숫자에 이벤트 걸기
+                $(".page-list").on("click", ".page-num", function(){
+                    pageNum = Number($(this).html());
+                    console.log(pageNum);
+                    $.each($(".page-num"), function(i, item){
+                        $(item).attr("class", "page-link page-num");
+                    })
+                    $(this).addClass("active");
+                    callAjax();
+                });
+
+                // 이전 페이지 이벤트 걸기
+                $(".page-prev").click(function(){
+                    if (tenPaging > 0){
+                        tenPaging -= 1;
+                        pageNum = tenPaging * 10 + 1;
+                        addPageList();
+                        callAjax();
+                    }
+                });
+
+                // 다음 페이지 이벤트 걸기
+                $(".page-next").click(function(){
+                    if (tenPaging < Math.ceil(totalPage/10) - 1){
+                        tenPaging += 1;
+                        pageNum = tenPaging * 10 + 1;
+                        addPageList();
+                        callAjax();
+                    }
+                });
+            })
+
+            function addPageList(){
+
+                // console.log(totalCnt);
+                // console.log(totalPage);
+
+                let output = '';
+                let num = 0; // 페이지 넘버
+                for(let i = 0; i < 10; i++){
+                    num = tenPaging * 10 + i + 1; // 페이지 넘버
+                    if (i == 0 && num <= totalPage){
+                        output += `<li class="page-item"><a class="page-link page-num active" href="#!">${num}</a></li>`;
+                    } else if (num <= totalPage){
+                        output += `<li class="page-item"><a class="page-link page-num" href="#!">${num}</a></li>`;
+                    }
+                }
+                // console.log(output);
+                $(".page-list").html(output);
+            }
+
+            function callAjax(){
+                let url = baseUrl + `?MobileOS=ETC&MobileApp=AppTest&serviceKey=${MY_KEY}&_type=json&contentTypeId=14&pageNo=${pageNum}&numOfRows=${numOfRows}${keyword}`;
+
+                $.ajax({
+                    url: url, // 데이터가 송수신될 서버의 주소
+                    type: "GET", // 통신 방식 (GET, POST, PUT, DELETE)
+                    dataType: "json", // 수신받을 데이터의 타입 (MIME TYPE)
+                    async: false,
+                    success: function(data){ // 통신이 성공하면 수행할 함수
+                        console.log(data);
+                        parsingJSON(data);
+                    },
+                    error: function(){},
+                    complete: function(){
+                        // $(".loading").hide();
+                    }
+                });
+            }
+
+            function parsingJSON(json){
+                totalCnt = json.response.body.totalCount;
+                totalPage = Math.ceil(totalCnt/9);
+                let cultureArr = json.response.body.items.item;
+                let output = ``;
+                $.each(cultureArr, function(i, tour){
+                    // console.log(tour.title);
+                    
+                    output += `<div class="col-md-4 mb-5"><div class="card h-100"><div class="card-body">`;
+
+                    if (tour.firstimage == ""){
+                        output += `<img src="images/noImage.jpeg">`;
+                    } else {
+                        output += `<img src="${tour.firstimage}">`;
+                    }
+
+                    output += `<div class="card-title">${tour.title}</div>`;
+                    output += `</div><div class="card-footer"><a class="btn btn-primary btn-sm" href="cultureDetail.html?contentid=${tour.contentid}">상세 페이지</a></div></div></div>`
+                    
+                });                
+                $("#cardBox").html(output);
+            }
+
+        </script>
+        <style>
+            #page{
+                display: flex;
+                justify-content: center;
+            }
+            .page-list{
+                display: flex;
+            }
+            img{
+                width: 282px;
+                height: 144px;
+            }
+            .card-title{
+                text-align: center;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Responsive navbar-->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container px-5">
+                <a class="navbar-brand" href="#!">Tour API</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="#!">문화 시설</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#!">찜</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Page Content-->
+        <div class="container px-4 px-lg-5">
+            <!-- Heading Row-->
+            <div class="row gx-4 gx-lg-5 align-items-center my-5 headDiv">
+                <div >
+                    <h1 class="font-weight-light">문화시설 관광 정보</h1>
+                </div>
+            </div>
+            <!-- Call to Action-->
+            <div class="card text-white bg-secondary my-5 py-4 text-center">
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" id="searchWord" class="form-control" placeholder="검색어를 입력하세요..">
+                        <button id="search" class="btn btn-primary" type="button">검색</button>
+                        <button id="cancel" class="btn btn-danger" type="button">취소</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Content Row-->
+            <div class="row gx-4 gx-lg-5" id="cardBox">
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <img src="" alt="">
+                            <h2 class="card-title">Card One</h2>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="card-title">Card Two</h2>
+                            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod tenetur ex natus at dolorem enim! Nesciunt pariatur voluptatem sunt quam eaque, vel, non in id dolore voluptates quos eligendi labore.</p>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="card-title">Card Three</h2>
+                            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Rem magni quas ex numquam, maxime minus quam molestias corporis quod, ea minima accusamus.</p>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-5">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="card-title">Card Three</h2>
+                            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Rem magni quas ex numquam, maxime minus quam molestias corporis quod, ea minima accusamus.</p>
+                        </div>
+                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 페이징 -->
+        <nav aria-label="Page navigation example" id="page">
+            <ul class="pagination">
+              <li class="page-item">
+                <button class="page-link page-prev" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </button>
+              </li>
+              <div class="page-list">
+                
+              </div>
+              
+              <li class="page-item">
+                <button class="page-link page-next" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </button>
+              </li>
+            </ul>
+        </nav>
+        <!-- Footer-->
+        <footer class="py-5 bg-dark">
+            <div class="container px-4 px-lg-5"><p class="m-0 text-center text-white">Copyright &copy; Goot5</p></div>
+        </footer>
+
+        <!-- modal -->
+        <div class="modal" id="myModal">
+            <div class="modal-dialog">
+              <div class="modal-content">
+          
+                <!-- Modal Header -->
+                <div class="modal-header">
+                  <h4 class="modal-title">검색어가 올바르지 않습니다</h4>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+          
+                <!-- Modal body -->
+                <div class="modal-body">
+                  검색어를 1글자 이상 입력해 주세요
+                </div>
+          
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                </div>
+          
+              </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+            Open modal
+        </button>
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Core theme JS-->
+        <script src="js/scripts.js"></script>
+    </body>
+</html>

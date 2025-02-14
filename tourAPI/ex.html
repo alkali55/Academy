@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Document</title>
+</head>
+<script>
+    $(function(){
+        $("#check").click(function(){
+            let ex = $("#ex").val()
+            console.log(ex.trim());
+        })
+    })
+</script>
+<body>
+    <input type="text" id="ex">
+    <button id="check">확인</button>
+</body>
+</html>
