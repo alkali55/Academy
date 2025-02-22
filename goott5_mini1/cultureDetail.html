@@ -46,7 +46,7 @@
         let comData = [];
         let infoData = new Object();
 
-        // 찜하기 버튼
+        // 갤러리 우림 보고 캐러셀 높이 정하기
 
         $(function(){
             contentId = getParameter("contentid");
@@ -331,6 +331,9 @@
             display: flex;
             align-items: center;
         }
+        .carousel-item{
+            height: 390px;
+        }
         .card-title{
             margin-top: 20px;
             margin-bottom: 20px;
@@ -520,6 +523,5 @@
 
     <!-- Bootstrap core JS-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    
   </body>
 </html>
